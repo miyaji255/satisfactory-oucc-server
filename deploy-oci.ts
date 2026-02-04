@@ -21,7 +21,7 @@ await Bun.write("vnics.json", JSON.stringify(vnics, null, 2));
 
 console.log("Creating Container Instance...");
 
-await $`oci container-instances container-instance create --auth security_token --compartment-id ${compartmentId} --availability-domain ${availabilityDomain} --shape CI.Standard.E4.Flex --shape-config '{"memoryInGBs": 8.0, "ocpus": 1.0}' --containers file://containers.json --vnics file://vnics.json --display-name satisfactory-server --wait-for-state SUCCEEDED`;
+await $`oci container-instances container-instance create --auth security_token --compartment-id ${compartmentId} --availability-domain ${availabilityDomain} --shape CI.Standard.A1.Flex --shape-config '{"memoryInGBs": 6.0, "ocpus": 1.0}' --containers file://containers.json --vnics file://vnics.json --display-name satisfactory-server --wait-for-state SUCCEEDED`;
 
 console.log("Container Instance created!");
 console.log("Check status: bun run status-oci.ts");
