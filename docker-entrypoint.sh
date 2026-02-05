@@ -18,7 +18,7 @@ if [ -n "$TS_AUTH_KEY" ]; then
     sleep 2
 
     # Run tailscale up with auth key and optional arguments
-    TS_ARGS="--authkey=$TS_AUTH_KEY --ephemeral"
+    TS_ARGS="--authkey=$TS_AUTH_KEY"
     [ -n "$TS_HOSTNAME" ] && TS_ARGS="$TS_ARGS --hostname=$TS_HOSTNAME"
     [ -n "$TS_EXTRA_ARGS" ] && TS_ARGS="$TS_ARGS $TS_EXTRA_ARGS"
 
