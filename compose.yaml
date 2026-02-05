@@ -1,0 +1,37 @@
+services:
+  satisfactory:
+    image: ghcr.io/miyaji255/satisfactory-oucc-server:latest
+    container_name: satisfactory-server
+    restart: unless-stopped
+
+    environment:
+      # Tailscale
+      TS_AUTH_KEY: ${TS_AUTH_KEY}
+      TS_HOSTNAME: ${TS_HOSTNAME:-satisfactory}
+      TS_EXTRA_ARGS: ${TS_EXTRA_ARGS:-}
+
+      # Discord Bot
+      SATISFACTORY_BOT_DISCORD_TOKEN: ${SATISFACTORY_BOT_DISCORD_TOKEN}
+
+      # Satisfactory Server
+      MAXPLAYERS: ${MAXPLAYERS:-4}
+      SEASONAL: ${SEASONAL:-false}
+
+    volumes:
+      # Satisfactory server configuration and saves
+      - ./config:/config
+      # Game server files
+      - ./server-files:/server-files
+      # Server logs
+      - ./logs:/logs
+      # Tailscale state (for persistent identity)
+      - tailscale-state:/var/lib/tailscale
+
+    # Required for Tailscale
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun:/dev/net/tun
+
+volumes:
+  tailscale-state:
