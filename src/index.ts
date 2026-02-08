@@ -369,7 +369,7 @@ async function main(): Promise<void> {
   console.log(`[INIT] Discord client created`);
 
   // Wait for ready event
-  await new Promise<void>((resolve) => {
+  const readyPromise = new Promise<void>((resolve) => {
     client.once('ready', () => {
       initTime = Date.now();
       console.log(`[DISCORD] Bot is ready! Logged in as: ${client.user?.tag}`);
@@ -383,7 +383,26 @@ async function main(): Promise<void> {
   });
 
   console.log(`[DISCORD] Logging in...`);
-  await client.login(discordToken);
+  try {
+    await client.login(discordToken);
+    console.log(`[DISCORD] Login initiated, waiting for ready event...`);
+  } catch (error) {
+    console.error(`[DISCORD] ERROR: Login failed!`, error);
+    console.error(`[DISCORD] Token preview: ${discordToken.substring(0, 10)}...${discordToken.substring(Math.max(0, discordToken.length - 10))}`);
+    throw error;
+  }
+
+  // Wait for ready with timeout
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    setTimeout(() => reject(new Error('Discord ready timeout after 30 seconds')), 30000);
+  });
+
+  try {
+    await Promise.race([readyPromise, timeoutPromise]);
+  } catch (error) {
+    console.error(`[DISCORD] ERROR:`, error);
+    throw error;
+  }
 
   // Setup purging
   if (willPurge(config.purge)) {
