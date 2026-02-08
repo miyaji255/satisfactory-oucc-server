@@ -8,8 +8,7 @@ await rm(`${import.meta.dirname}/dist`, { recursive: true, force: true });
 
 // Install dependencies in Satisfactory-Discord-Bot
 console.log("Installing dependencies...");
-// await $`npm ci`.cwd(`${import.meta.dirname}/Satisfactory-Discord-Bot`);
-await $`cd ${import.meta.dirname}/Satisfactory-Discord-Bot && npm ci`;
+await $`npm ci`.cwd(`${import.meta.dirname}/Satisfactory-Discord-Bot`);
 
 // Build single binary using Bun.build API
 console.log("Compiling to single binary...");
