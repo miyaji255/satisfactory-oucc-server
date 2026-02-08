@@ -16,17 +16,7 @@ import type { Database } from './types/database.ts';
 import type { LogEvent } from './types/parser.ts';
 import { loadConfigMacro, type ConfigSettings, type PurgeConfig } from './macro.config.ts' with { type: 'macro' };
 import type { FileHandle } from 'node:fs/promises';
-
-// Logger with timestamp
-function log(message: string, ...args: unknown[]): void {
-  const timestamp = new Date().toISOString();
-  console.log(`[${timestamp}] ${message}`, ...args);
-}
-
-function logError(message: string, ...args: unknown[]): void {
-  const timestamp = new Date().toISOString();
-  console.error(`[${timestamp}] ERROR: ${message}`, ...args);
-}
+import { log, logError } from './utils/logger.ts';
 
 // Settings are embedded at compile/build time via Bun macro
 const config = loadConfigMacro();
@@ -365,7 +355,7 @@ async function main(): Promise<void> {
 
   // Wait for ready event
   const readyPromise = new Promise<void>((resolve) => {
-    client.once('ready', () => {
+    client.once('clientReady', () => {
       initTime = Date.now();
       log(`Bot logged in as: ${client.user?.tag}`);
       log(`Connected to ${client.guilds.cache.size} guild(s)`);

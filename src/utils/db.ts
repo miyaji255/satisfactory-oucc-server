@@ -1,5 +1,6 @@
 import type { Database, Player, ServerState } from '../types/database.ts';
 import { getDefaultDatabase } from './formatter.ts';
+import { log, logError } from './logger.ts';
 
 export async function loadDatabase(dbPath: string): Promise<Database> {
   const file = Bun.file(dbPath);
@@ -12,13 +13,13 @@ export async function loadDatabase(dbPath: string): Promise<Database> {
       ...loaded,
       players: {},
     };
-    console.log(`Found: ${dbPath}`);
+    log(`Found: ${dbPath}`);
     return db;
   } catch (e) {
-    console.error(`Unable to read: ${dbPath}, creating new database`);
+    logError(`Unable to read: ${dbPath}, creating new database`);
     const db = getDefaultDatabase();
     await saveDatabase(dbPath, db);
-    console.log(`New DB written: ${dbPath}`);
+    log(`New DB written: ${dbPath}`);
     return db;
   }
 }

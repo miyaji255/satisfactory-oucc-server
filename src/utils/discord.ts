@@ -8,17 +8,7 @@ import {
   type Message,
 } from "discord.js";
 import type { PurgeConfig } from "../macro.config.ts";
-
-// Logger with timestamp
-export function log(message: string, ...args: unknown[]): void {
-  const timestamp = new Date().toISOString();
-  console.log(`[${timestamp}] ${message}`, ...args);
-}
-
-export function logError(message: string, ...args: unknown[]): void {
-  const timestamp = new Date().toISOString();
-  console.error(`[${timestamp}] ERROR: ${message}`, ...args);
-}
+import { log, logError } from "./logger.ts";
 
 export function createDiscordClient(): Client {
   return new Client({
