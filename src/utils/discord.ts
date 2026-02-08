@@ -9,6 +9,17 @@ import {
 } from "discord.js";
 import type { PurgeConfig } from "../macro.config.ts";
 
+// Logger with timestamp
+export function log(message: string, ...args: unknown[]): void {
+  const timestamp = new Date().toISOString();
+  console.log(`[${timestamp}] ${message}`, ...args);
+}
+
+export function logError(message: string, ...args: unknown[]): void {
+  const timestamp = new Date().toISOString();
+  console.error(`[${timestamp}] ERROR: ${message}`, ...args);
+}
+
 export function createDiscordClient(): Client {
   return new Client({
     intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages],
@@ -28,24 +39,14 @@ export async function sendDiscordMessage(
 ): Promise<void> {
   if (!message) return;
 
-  console.log(`[DISCORD] Searching for channel: "${channelName}"`);
-
   // Find all matching channels (not server-specific)
   const targetChannels = client.channels.cache.filter(
     (channel) =>
       channel.type === ChannelType.GuildText && channel.name === channelName,
   );
 
-  console.log(`[DISCORD] Found ${targetChannels.size} matching channel(s)`);
-
   if (targetChannels.size === 0) {
-    console.error(`[DISCORD] ERROR: No channels found with name: "${channelName}"`);
-    console.error(`[DISCORD] Available channels:`);
-    client.channels.cache.forEach(channel => {
-      if (channel.type === ChannelType.GuildText) {
-        console.error(`[DISCORD]   - #${channel.name} (in ${channel.guild.name})`);
-      }
-    });
+    logError(`Channel not found: "${channelName}"`);
     return;
   }
 
@@ -54,21 +55,16 @@ export async function sendDiscordMessage(
     if (targetChannel.type !== ChannelType.GuildText) continue;
 
     const guildName = targetChannel.guild.name;
-    console.log(`[DISCORD] Checking permissions for: ${guildName} > #${channelName}`);
 
     if (!targetChannel.guild.members.me?.permissionsIn(targetChannel)?.has(PermissionsBitField.Flags.SendMessages)) {
-      console.error(`[DISCORD] ERROR: No permission to send messages in: ${guildName} > #${channelName}`);
+      logError(`No permission to send in: ${guildName} > #${channelName}`);
       continue;
     }
 
-    console.log(`[DISCORD] Sending message to: ${guildName} > #${channelName}`);
-    console.log(`[DISCORD] Message preview: ${message.substring(0, 50)}${message.length > 50 ? '...' : ''}`);
     try {
       await targetChannel.send(message);
-      console.log(`[DISCORD] Message sent successfully to: ${guildName} > #${channelName}`);
     } catch (error) {
-      console.error(`[DISCORD] ERROR: Failed to send message to: ${guildName} > #${channelName}`);
-      console.error(`[DISCORD] Error:`, error);
+      logError(`Failed to send message to ${guildName}:`, error);
     }
   }
 }
@@ -98,7 +94,7 @@ export async function attemptPurge(client: Client, config: PurgeConfig): Promise
   );
 
   if (targetChannels.size === 0) {
-    console.error(`チャンネルが見つかりません: ${config.channelName}`);
+    logError(`チャンネルが見つかりません: ${config.channelName}`);
     return;
   }
 
@@ -109,12 +105,12 @@ export async function attemptPurge(client: Client, config: PurgeConfig): Promise
     const guildName = targetChannel.guild.name;
 
     if (!targetChannel.guild.members.me?.permissionsIn(targetChannel)?.has(PermissionsBitField.Flags.ViewChannel)) {
-      console.error(`チャンネルを表示する権限がありません: ${guildName}: ${config.channelName}`);
+      logError(`チャンネルを表示する権限がありません: ${guildName}: ${config.channelName}`);
       continue;
     }
 
     if (!targetChannel.guild.members.me?.permissionsIn(targetChannel)?.has(PermissionsBitField.Flags.ManageMessages)) {
-      console.error(`メッセージを管理する権限がありません: ${guildName}: ${config.channelName}`);
+      logError(`メッセージを管理する権限がありません: ${guildName}: ${config.channelName}`);
       continue;
     }
 
@@ -135,12 +131,12 @@ export async function attemptPurge(client: Client, config: PurgeConfig): Promise
     });
 
     if (botMessagesToPurge.length > 0) {
-      console.log(`${guildName}: ${botMessagesToPurge.length}件のメッセージを削除中（全${botMessages.length}件中）...`);
+      log(`${guildName}: ${botMessagesToPurge.length}件のメッセージを削除中（全${botMessages.length}件中）...`);
       for (const message of botMessagesToPurge) {
         try {
           await message.delete();
         } catch (error) {
-          console.error('メッセージの削除に失敗しました:', error);
+          logError('メッセージの削除に失敗しました:', error);
         }
       }
     }

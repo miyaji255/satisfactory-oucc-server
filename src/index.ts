@@ -17,6 +17,17 @@ import type { LogEvent } from './types/parser.ts';
 import { loadConfigMacro, type ConfigSettings, type PurgeConfig } from './macro.config.ts' with { type: 'macro' };
 import type { FileHandle } from 'node:fs/promises';
 
+// Logger with timestamp
+function log(message: string, ...args: unknown[]): void {
+  const timestamp = new Date().toISOString();
+  console.log(`[${timestamp}] ${message}`, ...args);
+}
+
+function logError(message: string, ...args: unknown[]): void {
+  const timestamp = new Date().toISOString();
+  console.error(`[${timestamp}] ERROR: ${message}`, ...args);
+}
+
 // Settings are embedded at compile/build time via Bun macro
 const config = loadConfigMacro();
 
@@ -39,8 +50,6 @@ async function update(client: ReturnType<typeof createDiscordClient>): Promise<v
   const previouslyUnreachable = db.server.unreachable;
   const previouslyOnline = db.server.online;
 
-  console.log(`[DEBUG] Starting server probe... Target: ${config.server.ip}:${config.server.port}`);
-
   try {
     // @ts-ignore - probe library may not have perfect types
     const data = await probe(
@@ -48,14 +57,6 @@ async function update(client: ReturnType<typeof createDiscordClient>): Promise<v
       config.server.port,
       config.server.queryTimeoutMs,
     );
-
-    console.log(`[DEBUG] Probe result:`, {
-      serverState: data.serverState,
-      serverVersion: data.serverVersion,
-      playerName: data.playerName,
-      playerCount: data.playerCount,
-      maxPlayers: data.maxPlayers,
-    });
 
     // Handle unreachable -> reachable
     if (previouslyUnreachable && !config.disableUnreachableFoundMessages) {
@@ -95,16 +96,7 @@ async function update(client: ReturnType<typeof createDiscordClient>): Promise<v
 
     await saveDatabase(config.dbPath, db);
   } catch (error) {
-    console.error('[ERROR] Server probe failed:', error);
-    console.error('[ERROR] Error details:', {
-      message: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined,
-      config: {
-        ip: config.server.ip,
-        port: config.server.port,
-        timeout: config.server.queryTimeoutMs,
-      },
-    });
+    logError(`Server probe failed: ${error instanceof Error ? error.message : String(error)}`);
     setDiscordActivity(client, '不明');
 
     if (!db.server.unreachable) {
@@ -131,6 +123,20 @@ async function update(client: ReturnType<typeof createDiscordClient>): Promise<v
 }
 
 function handleCommandLine(commandLineStr: string): void {
+  const commandLine = commandLineStr.match(/\S+/g);
+  if (!Array.isArray(commandLine)) return;
+
+  for (const arg of commandLine) {
+    const commandLineArgument = arg.match(/^-(?:NoLogTimes|LocalLogTimes|LogTimeCode)$/i);
+    if (Array.isArray(commandLineArgument)) {
+      logError(`Unsupported command line argument '${commandLineArgument[0]}' detected. Aborting...`);
+      process.exit(2);
+    }
+  }
+}
+
+function handleLoginRequest(client: ReturnType<typeof createDiscordClient>, data: LogEvent & { type: 'Login request' }): void {
+  log('Login request', data.userId, data.name);
   const commandLine = commandLineStr.match(/\S+/g);
   if (!Array.isArray(commandLine)) return;
 
@@ -178,7 +184,7 @@ function handleLoginRequest(client: ReturnType<typeof createDiscordClient>, data
 }
 
 function handleJoinRequest(data: LogEvent & { type: 'Join request' }): void {
-  console.log('Join request', data.name);
+  log('Join request', data.name);
 
   const userId = Object.values(db.players).find(({ name }) => name === data.name)?.userId;
   if (userId) {
@@ -190,7 +196,7 @@ function handleJoinRequest(data: LogEvent & { type: 'Join request' }): void {
 }
 
 function handleJoinSucceeded(client: ReturnType<typeof createDiscordClient>, data: LogEvent & { type: 'Join succeeded' }): void {
-  console.log('Join succeeded', data.name);
+  log('Join succeeded', data.name);
 
   const userId = Object.values(db.players).find(({ name }) => name === data.name)?.userId;
   if (userId) {
@@ -221,7 +227,7 @@ function handleJoinSucceeded(client: ReturnType<typeof createDiscordClient>, dat
 }
 
 function handleConnectionClose(client: ReturnType<typeof createDiscordClient>, data: LogEvent & { type: 'Connection close' }): void {
-  console.log('Connection close', data.userId);
+  log('Connection close', data.userId);
 
   if (INVALID_UNKNOWN_NAMES.includes(data.userId as any)) {
     if (
@@ -304,7 +310,6 @@ async function startLogWatcher(onLine: (line: string) => Promise<void>): Promise
       await file.text(); // Try to read
       break;
     } catch {
-      console.log(`Waiting for log file to exist: ${config.log.location}`);
       // Wait 1 second before retrying
       await new Promise((resolve) => setTimeout(resolve, 1000));
     }
@@ -344,51 +349,34 @@ async function startLogWatcher(onLine: (line: string) => Promise<void>): Promise
         await onLine(line);
       }
     } catch (error) {
-      console.error('Error reading log file:', error);
+      logError('Error reading log file:', error);
     }
   }
 }
 
 async function main(): Promise<void> {
-  console.log(`[INIT] Poll interval: ${config.pollIntervalMinutes} minutes (${config.pollIntervalMinutes * MS_PER_MINUTE} milliseconds)`);
-  console.log(`[INIT] Config:`, {
-    serverIp: config.server.ip,
-    serverPort: config.server.port,
-    maxPlayers: config.server.maxPlayers,
-    queryTimeout: config.server.queryTimeoutMs,
-    discordChannel: config.discord.channelName,
-    logLocation: config.log.location,
-  });
+  log(`Poll interval: ${config.pollIntervalMinutes} minutes`);
 
   // Load database
   db = await loadDatabase(config.dbPath);
-  console.log(`[INIT] Database loaded from: ${config.dbPath}`);
 
   // Create Discord client with automatic disposal
   await using client = createDiscordClient();
-  console.log(`[INIT] Discord client created`);
 
   // Wait for ready event
   const readyPromise = new Promise<void>((resolve) => {
     client.once('ready', () => {
       initTime = Date.now();
-      console.log(`[DISCORD] Bot is ready! Logged in as: ${client.user?.tag}`);
-      console.log(`[DISCORD] Connected to ${client.guilds.cache.size} guild(s)`);
-      // List all guilds
-      client.guilds.cache.forEach(guild => {
-        console.log(`[DISCORD]   - ${guild.name} (ID: ${guild.id})`);
-      });
+      log(`Bot logged in as: ${client.user?.tag}`);
+      log(`Connected to ${client.guilds.cache.size} guild(s)`);
       resolve();
     });
   });
 
-  console.log(`[DISCORD] Logging in...`);
   try {
     await client.login(discordToken);
-    console.log(`[DISCORD] Login initiated, waiting for ready event...`);
   } catch (error) {
-    console.error(`[DISCORD] ERROR: Login failed!`, error);
-    console.error(`[DISCORD] Token preview: ${discordToken.substring(0, 10)}...${discordToken.substring(Math.max(0, discordToken.length - 10))}`);
+    logError('Discord login failed:', error);
     throw error;
   }
 
@@ -400,7 +388,7 @@ async function main(): Promise<void> {
   try {
     await Promise.race([readyPromise, timeoutPromise]);
   } catch (error) {
-    console.error(`[DISCORD] ERROR:`, error);
+    logError('Discord ready error:', error);
     throw error;
   }
 
@@ -410,28 +398,23 @@ async function main(): Promise<void> {
       await attemptPurgeDiscord(client, config.purge);
     } else {
       nextPurge = getNextPurge(config.purge.hour);
-      console.log(`[PURGE] First purge will be ${new Date(nextPurge)}`);
+      log(`First purge will be ${new Date(nextPurge)}`);
     }
   }
 
   // Start polling
-  console.log(`[POLL] Starting server poll...`);
   await update(client);
   pollInterval = setInterval(() => update(client), config.pollIntervalMinutes * MS_PER_MINUTE);
-  console.log(`[POLL] Polling started (interval: ${config.pollIntervalMinutes} minutes)`);
 
   // Start log watching
-  console.log(`[LOG] Starting log watcher for: ${config.log.location}`);
   try {
     await startLogWatcher((msg) => handleLogLine(client, msg));
-    console.log(`[LOG] Log watcher started successfully`);
   } catch (error) {
-    console.error(`[ERROR] Log watcher failed:`, error);
+    logError('Log watcher failed:', error);
     process.exit(3);
   }
 
   // Keep process alive
-  console.log(`[INIT] Bot is running. Press Ctrl+C to exit.`);
   await new Promise<void>(() => {});
 }
 
