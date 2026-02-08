@@ -22,7 +22,9 @@ await Bun.build({
     autoloadTsconfig: false,
   },
   bytecode: true,
-  minify: true,
+  minify: {
+    keepNames: true,
+  },
   target: "bun",
   sourcemap: "inline",
 });
