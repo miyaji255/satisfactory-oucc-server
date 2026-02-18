@@ -12,6 +12,11 @@ services:
       TS_HOSTNAME: ${TS_HOSTNAME:-satisfactory}
       TS_EXTRA_ARGS: ${TS_EXTRA_ARGS:-}
 
+      # NetBird
+      NB_SETUP_KEY: ${NB_SETUP_KEY}
+      NB_HOSTNAME: ${NB_HOSTNAME:-satisfactory}
+      NB_MANAGEMENT_URL: ${NB_MANAGEMENT_URL:-}
+
       # Discord Bot
       SATISFACTORY_BOT_DISCORD_TOKEN: ${SATISFACTORY_BOT_DISCORD_TOKEN}
 
@@ -32,12 +37,17 @@ services:
       - ./steam-home:/home/steam/.steam
       # Tailscale state (for persistent identity)
       - tailscale-state:/var/lib/tailscale
+      # NetBird state (for persistent identity)
+      - netbird-state:/var/lib/netbird
 
-    # Required for Tailscale
+    # Required for Tailscale and NetBird
     cap_add:
       - NET_ADMIN
+      - SYS_ADMIN
+      - SYS_RESOURCE
     devices:
       - /dev/net/tun:/dev/net/tun
 
 volumes:
   tailscale-state:
+  netbird-state:

@@ -7,7 +7,7 @@ Tailscale統合機能付きSatisfactory専用サーバー。
 ## 特徴
 
 - ✅ Satisfactory専用サーバー（ワールドウェア対応）
-- ✅ Tailscale統合による安全なVPN接続
+- ✅ Tailscale / NetBird 統合による安全なVPN接続
 - ✅ Discord Botによるサーバー管理
 - ✅ 自動バックアップ機能
 - ✅ 配信用Dockerイメージ（GHCR）
@@ -24,11 +24,12 @@ cp .env.example .env
 nano .env
 ```
 
-**必須設定項目:**
+**必須設定項目 (Tailscale または NetBird):**
 
 | 変数 | 説明 |
 |------|------|
-| `TS_AUTH_KEY` | Tailscaleの認証キー（[Tailscale Admin Console](https://login.tailscale.com/admin/settings/keys)で「Reusable key」を作成） |
+| `TS_AUTH_KEY` | Tailscaleの認証キー（[Tailscale Admin Console](https://login.tailscale.com/admin/settings/keys)で作成） |
+| `NB_SETUP_KEY` | NetBirdのセットアップキー（[NetBird Dashboard](https://app.netbird.io/setup-keys)で作成） |
 | `SATISFACTORY_BOT_DISCORD_TOKEN` | Discord Botのトークン |
 
 ### 2. サーバーの起動
@@ -59,6 +60,14 @@ docker compose logs -f
 | `TS_AUTH_KEY` | ✅ | - | Tailscale認証キー（Reusable key推奨） |
 | `TS_HOSTNAME` | - | `satisfactory` | Tailscale上のホスト名 |
 | `TS_EXTRA_ARGS` | - | - | 追加のTailscale引数（例: `--accept-routes`） |
+
+### NetBird設定
+
+| 変数 | 必須 | デフォルト | 説明 |
+|------|:----:|----------|------|
+| `NB_SETUP_KEY` | - | - | NetBirdセットアップキー |
+| `NB_HOSTNAME` | - | `satisfactory` | NetBird上のホスト名 |
+| `NB_MANAGEMENT_URL` | - | - | セルフホスト時のNetBird管理サーバーURL |
 
 ### Discord Bot設定
 
@@ -135,9 +144,9 @@ tar -xzf satisfactory-backup-YYYYMMDD.tar.gz
 
 ### 接続できない
 
-1. Tailscale管理コンソールでマシンがオンラインか確認
-2. ファイアウォールでTailscaleが許可されているか確認
-3. `.env` の `TS_AUTH_KEY` が正しいか確認
+1. Tailscale / NetBird 管理コンソールでマシンがオンラインか確認
+2. ファイアウォールで VPN が許可されているか確認
+3. `.env` の認証キーが正しいか確認
 
 ### パーミッションエラー
 
