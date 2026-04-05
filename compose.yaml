@@ -6,12 +6,8 @@ services:
     restart: unless-stopped
     network_mode: host
 
+    env_file: .env
     environment:
-      # Tailscale
-      TS_AUTH_KEY: ${TS_AUTH_KEY}
-      TS_HOSTNAME: ${TS_HOSTNAME:-satisfactory}
-      TS_EXTRA_ARGS: ${TS_EXTRA_ARGS:-}
-
       # NetBird
       NB_SETUP_KEY: ${NB_SETUP_KEY}
       NB_HOSTNAME: ${NB_HOSTNAME:-satisfactory}
@@ -35,12 +31,10 @@ services:
       - ./steamapps:/steamapps
       - ./steam-root:/root/.steam
       - ./steam-home:/home/steam/.steam
-      # Tailscale state (for persistent identity)
-      - tailscale-state:/var/lib/tailscale
       # NetBird state (for persistent identity)
       - netbird-state:/var/lib/netbird
 
-    # Required for Tailscale and NetBird
+    # Required for NetBird
     cap_add:
       - NET_ADMIN
       - SYS_ADMIN
@@ -49,5 +43,4 @@ services:
       - /dev/net/tun:/dev/net/tun
 
 volumes:
-  tailscale-state:
   netbird-state:

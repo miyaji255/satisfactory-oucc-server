@@ -1,13 +1,13 @@
 # satisfactory-oci-server
 
-Tailscale統合機能付きSatisfactory専用サーバー。
+NetBird統合機能付きSatisfactory専用サーバー。
 
-[wolveix/satisfactory-server](https://github.com/wolveix/satisfactory-server)をベースに、TailscaleでのVPN接続とDiscord Bot機能を追加しています。
+[wolveix/satisfactory-server](https://github.com/wolveix/satisfactory-server)をベースに、NetBirdでのVPN接続とDiscord Bot機能を追加しています。
 
 ## 特徴
 
 - ✅ Satisfactory専用サーバー（ワールドウェア対応）
-- ✅ Tailscale / NetBird 統合による安全なVPN接続
+- ✅ NetBird 統合による安全なVPN接続
 - ✅ Discord Botによるサーバー管理
 - ✅ 自動バックアップ機能
 - ✅ 配信用Dockerイメージ（GHCR）
@@ -24,11 +24,10 @@ cp .env.example .env
 nano .env
 ```
 
-**必須設定項目 (Tailscale または NetBird):**
+**必須設定項目 (NetBird):**
 
 | 変数 | 説明 |
 |------|------|
-| `TS_AUTH_KEY` | Tailscaleの認証キー（[Tailscale Admin Console](https://login.tailscale.com/admin/settings/keys)で作成） |
 | `NB_SETUP_KEY` | NetBirdのセットアップキー（[NetBird Dashboard](https://app.netbird.io/setup-keys)で作成） |
 | `SATISFACTORY_BOT_DISCORD_TOKEN` | Discord Botのトークン |
 
@@ -47,19 +46,11 @@ docker compose logs -f
 
 ### 3. ゲームへの接続
 
-1. [Tailscaleの管理コンソール](https://login.tailscale.com/admin/machines)にアクセス
-2. `satisfactory`（または設定したホスト名）のマシンを探す
-3. 表示されているTailscale IPアドレスでSatisfactoryに接続
+1. [NetBirdの管理画面](https://app.netbird.io/peers)にアクセス
+2. `satisfactory`（または設定したホスト名）のピアを探す
+3. 表示されているNetBird IPアドレスでSatisfactoryに接続
 
 ## 環境変数
-
-### Tailscale設定
-
-| 変数 | 必須 | デフォルト | 説明 |
-|------|:----:|----------|------|
-| `TS_AUTH_KEY` | ✅ | - | Tailscale認証キー（Reusable key推奨） |
-| `TS_HOSTNAME` | - | `satisfactory` | Tailscale上のホスト名 |
-| `TS_EXTRA_ARGS` | - | - | 追加のTailscale引数（例: `--accept-routes`） |
 
 ### NetBird設定
 
@@ -144,7 +135,7 @@ tar -xzf satisfactory-backup-YYYYMMDD.tar.gz
 
 ### 接続できない
 
-1. Tailscale / NetBird 管理コンソールでマシンがオンラインか確認
+1. NetBird 管理コンソールでマシンがオンラインか確認
 2. ファイアウォールで VPN が許可されているか確認
 3. `.env` の認証キーが正しいか確認
 
@@ -203,4 +194,3 @@ GitHub Actionsで自動ビルド：
 
 - [Satisfactory Wiki - 専用サーバー](https://satisfactory.wiki.gg/wiki/Dedicated_servers)
 - [wolveix/satisfactory-server](https://github.com/wolveix/satisfactory-server)
-- [Tailscale ドキュメント](https://tailscale.com/kb/)

@@ -1,3 +1,6 @@
 [submodule "Satisfactory-Discord-Bot"]
 	path = Satisfactory-Discord-Bot
 	url = git@github.com:DJWoodZ/Satisfactory-Discord-Bot.git
+[submodule "arm-docker"]
+	path = arm-docker
+	url = git@github.com:sa-shiro/Satisfactory-Dedicated-Server-ARM64-Docker.git
